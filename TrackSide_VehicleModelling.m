@@ -7,7 +7,8 @@
 % Information:
 %   Nirat Pai
 %   BSc Mechanical Engineering, Purdue University
-%   LinkedIn: linkedin.com/in/nirat-pai-770661288
+%   Minor in Electrical & Computer Engineering, and Economics
+%   LinkedIn: linkedin.com/in/nirat-pai
 %   email: niratpai24@gmail.com
 %   GitHub: https://github.com/waffless24
 
@@ -84,6 +85,22 @@ r_gearbox = double(engine_spec{13:end, "Value"});
 nog = length(r_gearbox);
 r_final = r_primary * r_drive * r_gearbox;
 
+% BRAKES:
+d_disc_front = double(brakes{2, "Value"})/1000;
+d_disc_rear = double(brakes{3, "Value"})/1000;
+hpad_front = double(brakes{4, "Value"})/1000;
+hpad_rear =double(brakes{5, "Value"})/1000;
+
+mu_pad = double(brakes{6, "Value"});
+
+nop_front = double(brakes{7, "Value"});
+nop_rear = double(brakes{8, "Value"});
+
+d_cal = double(brakes{9, "Value"})/1000;
+d_mast = double(brakes{10, "Value"})/1000;
+
+r_pedal = double(brakes{11, "Value"});
+
 % TYRES:
 tyre_rad = (double(tyres{3, "Value"}) * 0.0254) / 2;
 
@@ -103,7 +120,6 @@ mu_x_sens = double(tyres{10, "Value"});
 % Tyre stiffness (Torque Resistance)
 stiff_F = double(tyres{11, "Value"});
 stiff_R = double(tyres{12, "Value"});
-
 
 %% ________________________________________________________________________
 %% POWERTRAIN MODEL
@@ -140,6 +156,7 @@ vehicle_speed  = [0;vehicle_speed];
 gears = [gears(1); gears];
 gear_tf = [zeros(1,nog);gear_tf];
 tf_max = [0; tf_max];
+
 disp('Powertrain Model generated....');
 
 % Gear shift points & Engine RPM drops
@@ -148,6 +165,24 @@ g_shifts = find(diff(gears));
 g_shifts = vehicle_speed(g_shifts);
 
 disp('Gear Shift points genearted....');
+
+%% ________________________________________________________________________
+%% BRAKE MODEL
+
+% Dimensions
+a_mast = (pi * d_mast^2) / 4;
+a_cal_front = (nop_front * pi * d_cal^2) / 4;
+a_cal_rear = (nop_rear * pi * d_cal^2) / 4;
+
+% Brake coefficients required for modelling
+brc1_front = 0.25 * (tyre_rad / ((d_disc_front - hpad_front)/ 2)) * (1/(mu_pad * a_cal_front));
+brc1_rear = 0.25 * (tyre_rad / ((d_disc_rear - hpad_rear)/ 2)) * (1/(mu_pad * a_cal_rear));
+
+brc2 = a_mast / r_pedal;
+
+disp('Brake model genearted....');
+%% ________________________________________________________________________
+%% STEERING MODEL
 
 %% ________________________________________________________________________
 %% FORCE MODEL
@@ -229,6 +264,9 @@ for i = 1:length(vehicle_speed)
 end
 
 disp('GGV map generated....')
+
+w_last = warning('query','last');
+warning('off', w_last.identifier);
 
 %% ________________________________________________________________________
 %% PLOTTING
